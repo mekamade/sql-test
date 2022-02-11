@@ -43,6 +43,17 @@ class TestExample(DbTest):
         )
 
         sql = """
+            SELECT 
+                (SELECT 
+                    COUNT(*)
+                FROM 
+                    enterprise_sales_enterprise_customers
+                WHERE
+                    enterprise_sales_enterprise_customers.sales_organization_id = organizations.id)
+                AS subordinates_count,
+                organizations.id AS id
+            FROM 
+                organizations;
         """
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(sql)

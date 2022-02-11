@@ -50,3 +50,22 @@ $ docker-compose exec db psql -v ON_ERROR_STOP=1 -U postgres test -a -f "sql/sch
 ```bash
 $ docker-compose up dbtest
 ```
+
+### Solution Notes
+#### Problem 1: `count_the_number_of_subordinates`
+
+```
+SELECT 
+    (SELECT 
+        COUNT(*)
+    FROM 
+        enterprise_sales_enterprise_customers
+    WHERE
+        enterprise_sales_enterprise_customers.sales_organization_id = organizations.id)
+    AS subordinates_count,
+    organizations.id AS id
+FROM 
+    organizations;
+```
+
+- Conventional SQL Query where the number of corresponding records in another table are counted.
