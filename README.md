@@ -69,3 +69,19 @@ FROM
 ```
 
 - Conventional SQL Query where the number of corresponding records in another table are counted.
+
+#### Problem 2: `calculate_center_of_each_segment`
+
+```
+    SELECT 
+        id, 
+        ST_X(ST_Transform(ST_Centroid(bounds), 4326)) AS longitude,
+        ST_Y(ST_Transform(ST_Centroid(bounds), 4326)) AS latitude 
+    FROM 
+        japan_segments;
+```
+
+- Inferred that the `bounds` data is stored using the `ESPG:3857` projection (flat surface). 
+- Using PostGIS we are able to find the centroid of this region, then transform that location to the `ESPG:4326` projection. 
+- The `ESPG:4326` coordinate system is global (curved surface), so we can extract the required `latitude` and `longitude` value.
+- Referred PostGIS documentation for the methods: `ST_X`, `ST_Y`, `ST_Transform` & `ST_Centroid`.
