@@ -55,17 +55,17 @@ $ docker-compose up dbtest
 #### Problem 1: `count_the_number_of_subordinates`
 
 ```
-SELECT 
-    (SELECT 
-        COUNT(*)
+    SELECT 
+        (SELECT 
+            COUNT(*)
+        FROM 
+            enterprise_sales_enterprise_customers
+        WHERE
+            enterprise_sales_enterprise_customers.sales_organization_id = organizations.id)
+        AS subordinates_count,
+        organizations.id AS id
     FROM 
-        enterprise_sales_enterprise_customers
-    WHERE
-        enterprise_sales_enterprise_customers.sales_organization_id = organizations.id)
-    AS subordinates_count,
-    organizations.id AS id
-FROM 
-    organizations;
+        organizations;
 ```
 
 - Conventional SQL Query where the number of corresponding records in another table are counted.
@@ -75,13 +75,40 @@ FROM
 ```
     SELECT 
         id, 
-        ST_X(ST_Transform(ST_Centroid(bounds), 4326)) AS longitude,
-        ST_Y(ST_Transform(ST_Centroid(bounds), 4326)) AS latitude 
+        ST_X(ST_Centroid(bounds)) AS longitude,
+        ST_Y(ST_Centroid(bounds)) AS latitude 
     FROM 
         japan_segments;
 ```
 
-- Inferred that the `bounds` data is stored using the `ESPG:3857` projection (flat surface). 
-- Using PostGIS we are able to find the centroid of this region, then transform that location to the `ESPG:4326` projection. 
+- Inferred that the `bounds` data is stored using the `ESPG:4326` (SRID = 4326) projection.
+- Using PostGIS we are able to find the centroid of this region.
 - The `ESPG:4326` coordinate system is global (curved surface), so we can extract the required `latitude` and `longitude` value.
-- Referred PostGIS documentation for the methods: `ST_X`, `ST_Y`, `ST_Transform` & `ST_Centroid`.
+- Referred PostGIS documentation for the methods: `ST_X`, `ST_Y` & `ST_Centroid`.
+
+#### Problem 3: `segments_using_geojson_boundary`
+
+```
+    SELECT
+        id
+    FROM
+        japan_segments
+    WHERE ST_Contains(
+        ST_GeomFromGeoJSON('{
+            "type": "Polygon",
+            "coordinates": [[[130.27313232421875, 30.519681272749402],
+                    [131.02020263671875, 30.519681272749402],
+                    [131.02020263671875, 30.80909017893796],
+                    [130.27313232421875, 30.80909017893796],
+                    [130.27313232421875, 30.519681272749402]]],
+            "crs":{"type":"name","properties":{"name":"EPSG:4326"}}
+            }'
+        ), 
+        bounds
+    );
+```
+
+- Using `ST_GeomFromGeoJSON` we can get a PostGIS geometry object from the GeoJSON. Only the `geometry` attribute of the GeoJSON needs to be passed. 
+- Input geometry from GeoJSON has unknown (0) SRID. So we add `"crs":{"type":"name","properties":{"name":"EPSG:4326"}}` to explicitly define the SRID as 4326.
+- Using the `ST_Contains` method from PostGIS, we are able to solve for this query. 
+

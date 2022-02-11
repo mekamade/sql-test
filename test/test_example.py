@@ -101,8 +101,8 @@ class TestExample(DbTest):
         sql = """
             SELECT 
                 id, 
-                ST_X(ST_Transform(ST_Centroid(bounds), 4326)) AS longitude,
-                ST_Y(ST_Transform(ST_Centroid(bounds), 4326)) AS latitude 
+                ST_X(ST_Centroid(bounds)) AS longitude,
+                ST_Y(ST_Centroid(bounds)) AS latitude
             FROM 
                 japan_segments;
         """
@@ -172,6 +172,23 @@ class TestExample(DbTest):
         )
 
         sql = """
+            SELECT
+                id
+            FROM
+                japan_segments
+            WHERE ST_Contains(
+                ST_GeomFromGeoJSON('{
+                    "type": "Polygon",
+                    "coordinates": [[[130.27313232421875, 30.519681272749402],
+                            [131.02020263671875, 30.519681272749402],
+                            [131.02020263671875, 30.80909017893796],
+                            [130.27313232421875, 30.80909017893796],
+                            [130.27313232421875, 30.519681272749402]]],
+                    "crs":{"type":"name","properties":{"name":"EPSG:4326"}}
+                    }'
+                ), 
+                bounds
+            );
         """
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(sql)
